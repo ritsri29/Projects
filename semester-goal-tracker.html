@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SemTrack — Semester Goal Tracker (Oct–Feb)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05070f; --bg2:#0a0f1e;
+  --card:rgba(255,255,255,.045); --card2:rgba(255,255,255,.07);
+  --line:rgba(148,163,184,.16);
+  --txt:#e2e8f0; --dim:#8b9bb4; --dim2:#5c6b84;
+  --cyan:#22d3ee; --violet:#a78bfa; --green:#34d399; --pink:#f472b6; --amber:#fbbf24;
+  --grad:linear-gradient(135deg,#22d3ee,#a78bfa);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;
+  background-image:
+    radial-gradient(900px 500px at 85% -10%,rgba(167,139,250,.14),transparent 60%),
+    radial-gradient(800px 500px at -10% 20%,rgba(34,211,238,.12),transparent 60%),
+    radial-gradient(700px 500px at 50% 110%,rgba(52,211,153,.07),transparent 60%);
+  background-attachment:fixed;
+}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-thumb{background:#26314a;border-radius:5px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== layout ===== */
+.wrap{max-width:1200px;margin:0 auto;padding:18px 20px 80px}
+header.top{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:14px 18px;border:1px solid var(--line);border-radius:18px;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+  backdrop-filter:blur(10px);position:sticky;top:10px;z-index:50;
+}
+.logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.25rem;letter-spacing:.06em;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;white-space:nowrap}
+.logo small{display:block;font-family:'Inter';font-weight:500;font-size:.62rem;letter-spacing:.28em;color:var(--dim);-webkit-text-fill-color:var(--dim)}
+nav.tabs{display:flex;gap:6px;margin-left:auto;flex-wrap:wrap}
+nav.tabs button{
+  font-family:'Inter';font-weight:600;font-size:.83rem;color:var(--dim);background:transparent;border:1px solid transparent;
+  padding:8px 15px;border-radius:10px;cursor:pointer;transition:.2s;
+}
+nav.tabs button:hover{color:var(--txt);background:var(--card)}
+nav.tabs button.on{color:#04121a;background:var(--grad);border-radius:10px;box-shadow:0 4px 18px rgba(34,211,238,.25)}
+.iconbtn{background:var(--card);border:1px solid var(--line);color:var(--dim);border-radius:10px;padding:8px 11px;cursor:pointer;font-size:.85rem;transition:.2s}
+.iconbtn:hover{color:var(--txt);border-color:var(--cyan)}
+main{margin-top:20px}
+section.view{display:none;animation:fade .3s ease}
+section.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+h2.sec{font-family:'Orbitron';font-size:1.05rem;letter-spacing:.05em;margin:0 0 14px;display:flex;align-items:center;gap:10px}
+h2.sec::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,var(--line),transparent)}
+
+/* ===== cards ===== */
+.card{border:1px solid var(--line);border-radius:16px;padding:18px;background:var(--card);backdrop-filter:blur(8px)}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.stat{border-radius:16px;padding:16px 18px;border:1px solid var(--line);background:var(--card);position:relative;overflow:hidden}
+.stat::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--sc,var(--cyan))}
+.stat .v{font-family:'Orbitron';font-size:1.7rem;font-weight:700;margin-top:4px}
+.stat .l{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+
+/* ===== dashboard ===== */
+.hero{display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px}
+@media(max-width:860px){.hero{grid-template-columns:1fr}}
+.hero .hi{font-family:'Orbitron';font-size:1.3rem;font-weight:700}
+.ringwrap{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.progring{position:relative;width:150px;height:150px;flex:none}
+.progring svg{transform:rotate(-90deg)}
+.progring .pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Orbitron';font-weight:700}
+.pct b{font-size:1.6rem}.pct span{font-size:.6rem;color:var(--dim);letter-spacing:.15em}
+.subjmini{flex:1;min-width:200px;display:flex;flex-direction:column;gap:9px}
+.smrow{display:flex;align-items:center;gap:10px;font-size:.8rem}
+.smrow .nm{width:138px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{flex:1;height:7px;border-radius:4px;background:#141b2e;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:4px;transition:width .5s ease}
+.smrow .pc{width:36px;text-align:right;color:var(--dim);font-variant-numeric:tabular-nums}
+.mile{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.mile div{font-size:.75rem;border:1px dashed var(--line);border-radius:10px;padding:7px 12px;color:var(--dim)}
+.mile b{color:var(--amber)}
+.quote{margin-top:14px;font-size:.85rem;color:var(--dim);font-style:italic;border-left:2px solid var(--violet);padding-left:12px}
+
+/* today list */
+.trow{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:11px;background:var(--card2);margin-bottom:8px;font-size:.86rem}
+.trow .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.trow.done{opacity:.5}
+.trow.done .t{text-decoration:line-through}
+.trow .t{flex:1}
+.trow .m{color:var(--dim);font-size:.72rem}
+.trow .chk{cursor:pointer;font-size:1rem;background:none;border:none;color:var(--dim2)}
+.trow .chk:hover{color:var(--green)}
+.trow.done .chk{color:var(--green)}
+.trow .del{cursor:pointer;background:none;border:none;color:var(--dim2);font-size:.85rem}
+.trow .del:hover{color:var(--pink)}
+.empty{color:var(--dim2);font-size:.85rem;padding:14px 4px;text-align:center}
+
+/* timer */
+.timer{display:flex;flex-direction:column;align-items:center;gap:10px}
+.timer .clock{font-family:'Orbitron';font-size:2.6rem;font-weight:700;letter-spacing:.06em;
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.timer .btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.timer .btns button{font-size:.78rem;padding:7px 13px}
+
+/* ===== calendar ===== */
+.calhead{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.calhead h3{font-family:'Orbitron';font-size:1.15rem;min-width:190px}
+.calhead .nav{display:flex;gap:6px;margin-left:auto}
+.dow{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-bottom:8px}
+.dow div{text-align:center;font-size:.68rem;letter-spacing:.15em;color:var(--dim2);text-transform:uppercase;padding:4px 0}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.day{
+  min-height:88px;border:1px solid var(--line);border-radius:13px;padding:8px 9px;cursor:pointer;position:relative;
+  background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.012));transition:.18s;display:flex;flex-direction:column;
+}
+.day:hover{border-color:var(--cyan);transform:translateY(-2px);box-shadow:0 8px 22px rgba(34,211,238,.12)}
+.day.off{opacity:.28;pointer-events:none;background:none}
+.day.today{border-color:var(--violet);box-shadow:0 0 0 1px var(--violet) inset}
+.day.sel{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan) inset}
+.day .n{font-family:'Orbitron';font-size:.82rem;color:var(--dim)}
+.day.today .n{color:var(--violet)}
+.day .dots{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.day .dots i{width:7px;height:7px;border-radius:50%}
+.day .pctg{margin-top:auto;font-size:.62rem;color:var(--dim2)}
+.day .pctg b{color:var(--green)}
+.day .wknd{position:absolute;top:8px;right:9px;font-size:.55rem;letter-spacing:.1em;color:#3b4a66}
+
+/* day panel */
+.daypanel{position:fixed;top:0;right:-460px;width:440px;max-width:94vw;height:100vh;background:#0a0f1eef;backdrop-filter:blur(16px);
+  border-left:1px solid var(--line);z-index:100;transition:right .3s ease;display:flex;flex-direction:column}
+.daypanel.open{right:0}
+.daypanel .ph{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.daypanel .ph h3{font-family:'Orbitron';font-size:1rem;flex:1}
+.daypanel .ph button{background:none;border:none;color:var(--dim);font-size:1.3rem;cursor:pointer}
+.daypanel .pb{padding:18px 20px;overflow-y:auto;flex:1}
+.daypanel .pf{padding:16px 20px;border-top:1px solid var(--line)}
+label.f{display:block;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:11px 0 5px}
+select,input[type=text],input[type=number],input[type=date]{
+  width:100%;background:#0d1426;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:9px 11px;font-family:'Inter';font-size:.86rem;outline:none}
+select:focus,input:focus{border-color:var(--cyan)}
+.btn{font-family:'Inter';font-weight:600;font-size:.86rem;border:none;border-radius:10px;padding:10px 16px;cursor:pointer;transition:.2s}
+.btn.pri{background:var(--grad);color:#04121a;box-shadow:0 4px 16px rgba(34,211,238,.25)}
+.btn.pri:hover{filter:brightness(1.12)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--cyan)}
+.btn.sm{padding:7px 12px;font-size:.78rem}
+
+/* ===== syllabus ===== */
+.subjcard{border:1px solid var(--line);border-radius:15px;background:var(--card);margin-bottom:12px;overflow:hidden}
+.subjcard>.sh{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;user-select:none}
+.subjcard>.sh:hover{background:var(--card2)}
+.subjcard .sb{width:11px;height:11px;border-radius:4px;flex:none}
+.subjcard .sn{font-weight:600;font-size:.95rem;flex:1}
+.subjcard .sp{font-family:'Orbitron';font-size:.8rem;color:var(--dim)}
+.subjcard .caret{color:var(--dim2);transition:.2s;font-size:.75rem}
+.subjcard.open .caret{transform:rotate(90deg)}
+.subjcard .sbar{height:6px;background:#141b2e}
+.subjcard .sbar i{display:block;height:100%;transition:width .5s}
+.subjcard .sbody{display:none;padding:6px 16px 16px}
+.subjcard.open .sbody{display:block}
+.mgrp{margin-top:12px}
+.mgrp .mt{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim2);margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.mgrp .mt::after{content:"";flex:1;height:1px;background:var(--line)}
+.topic{display:flex;align-items:flex-start;gap:11px;padding:7px 8px;border-radius:9px;font-size:.86rem;cursor:pointer;transition:.15s}
+.topic:hover{background:var(--card2)}
+.topic .cb{width:18px;height:18px;border-radius:6px;border:1.6px solid var(--dim2);flex:none;margin-top:1px;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:#04121a;transition:.15s}
+.topic.d .cb{background:var(--green);border-color:var(--green)}
+.topic.d .tt{color:var(--dim);text-decoration:line-through}
+.topic .tt{flex:1;line-height:1.45}
+.topic .rm{background:none;border:none;color:transparent;cursor:pointer;font-size:.8rem}
+.topic:hover .rm{color:var(--dim2)}
+.topic:hover .rm:hover{color:var(--pink)}
+.addtop{display:flex;gap:8px;margin-top:10px}
+.addtop input{flex:1}
+
+/* ===== performance ===== */
+.weeks{display:flex;align-items:flex-end;gap:5px;height:150px;padding:10px 4px 0;overflow-x:auto}
+.wkcol{flex:1;min-width:26px;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end}
+.wkbar{width:100%;border-radius:5px 5px 0 0;background:var(--grad);min-height:3px;position:relative;transition:height .5s}
+.wkbar:hover{filter:brightness(1.25)}
+.wklab{font-size:.58rem;color:var(--dim2);white-space:nowrap}
+.testrow{display:grid;grid-template-columns:110px 1fr 70px 60px 34px;gap:8px;align-items:center;padding:9px 10px;border-radius:10px;background:var(--card2);margin-bottom:7px;font-size:.83rem}
+.testrow .sc{font-family:'Orbitron';text-align:right}
+@media(max-width:640px){.testrow{grid-template-columns:80px 1fr 60px 50px 30px;font-size:.75rem}}
+.tag{display:inline-block;font-size:.64rem;padding:2px 9px;border-radius:20px;border:1px solid var(--line);color:var(--dim)}
+.hint{font-size:.72rem;color:var(--dim2);margin-top:8px}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(80px);background:#0d1426;border:1px solid var(--cyan);
+  color:var(--txt);padding:11px 20px;border-radius:12px;font-size:.84rem;z-index:300;transition:.3s;opacity:0;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+footer{margin-top:34px;text-align:center;font-size:.7rem;color:var(--dim2)}
+.topic,.trow .chk,.trow .del,nav.tabs button,.btn,.day{touch-action:manipulation}
+@media (hover:none) and (pointer:coarse){
+ .topic{padding:12px 8px;font-size:.92rem}
+ .topic .cb{width:22px;height:22px}
+ .trow{padding:12px 11px}
+ .trow .chk{font-size:1.3rem;padding:10px}
+ .trow .del{font-size:1rem;padding:6px}
+}
+@media(max-width:700px){.day{min-height:66px;padding:6px 7px}.day .dots{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="logo">SEMTRACK<small>OCT 2026 — FEB 2027</small></div>
+  <nav class="tabs" id="tabs">
+    <button data-v="dash" class="on">Dashboard</button>
+    <button data-v="cal">Calendar</button>
+    <button data-v="syl">Syllabus</button>
+    <button data-v="perf">Performance</button>
+  </nav>
+  <button class="iconbtn" id="btnExport" title="Backup data (JSON)">⭳</button>
+  <button class="iconbtn" id="btnImport" title="Restore backup">⭱</button>
+  <button class="iconbtn" id="btnReset" title="Reset everything">⟲</button>
+  <input type="file" id="fileImport" accept=".json" hidden>
+</header>
+
+<main>
+
+<!-- ================= DASHBOARD ================= -->
+<section class="view on" id="v-dash">
+  <div class="hero">
+    <div class="card">
+      <div class="hi">Semester Mission Board</div>
+      <div style="font-size:.8rem;color:var(--dim);margin:6px 0 16px">Set daily goals · tick the syllabus · watch the performance graph climb.</div>
+      <div class="ringwrap">
+        <div class="progring">
+          <svg width="150" height="150">
+            <circle cx="75" cy="75" r="64" fill="none" stroke="#141b2e" stroke-width="11"/>
+            <circle id="ringMain" cx="75" cy="75" r="64" fill="none" stroke="url(#gr1)" stroke-width="11" stroke-linecap="round" stroke-dasharray="402" stroke-dashoffset="402"/>
+            <defs><linearGradient id="gr1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22d3ee"/><stop offset="1" stop-color="#a78bfa"/></linearGradient></defs>
+          </svg>
+          <div class="pct"><b id="ringPct">0%</b><span>SYLLABUS</span></div>
+        </div>
+        <div class="subjmini" id="subjMini"></div>
+      </div>
+      <div class="mile" id="milestones"></div>
+      <div class="quote" id="quote"></div>
+    </div>
+    <div class="card">
+      <h2 class="sec" style="margin-top:0">Today · <span id="todayDate"></span></h2>
+      <div id="todayGoals"></div>
+      <button class="btn pri sm" style="margin-top:6px" onclick="openDay(todayKey())">+ Add goal for today</button>
+      <hr style="border:none;border-top:1px solid var(--line);margin:18px 0 14px">
+      <h2 class="sec" style="margin-top:0">Focus Timer</h2>
+      <div class="timer">
+        <div class="clock" id="clock">25:00</div>
+        <div class="btns">
+          <button class="btn ghost sm" onclick="setTimer(25)">25 min</button>
+          <button class="btn ghost sm" onclick="setTimer(50)">50 min</button>
+          <button class="btn pri sm" id="tStart" onclick="toggleTimer()">Start</button>
+          <button class="btn ghost sm" onclick="resetTimer()">Reset</button>
+        </div>
+        <div class="hint" id="tSess">Deep-work sessions today: 0</div>
+      </div>
+    </div>
+  </div>
+  <div class="grid g4" id="statRow"></div>
+</section>
+
+<!-- ================= CALENDAR ================= -->
+<section class="view" id="v-cal">
+  <div class="calhead">
+    <h3 id="calTitle"></h3>
+    <button class="iconbtn" onclick="calMove(-1)">‹</button>
+    <button class="iconbtn" onclick="calMove(1)">›</button>
+    <div class="nav">
+      <button class="btn ghost sm" onclick="calGoToday()">Today</button>
+      <button class="btn pri sm" onclick="openDay(selKey())">+ Goal on selected day</button>
+    </div>
+  </div>
+  <div class="dow"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+  <div class="cal" id="calGrid"></div>
+  <div class="hint">Har din ka plan pre-loaded hai — click karke edit/add karo. Apna bhi goal add kar sakte ho. <i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);vertical-align:middle"></i> done · <i style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);vertical-align:middle"></i> pending</div>
+</section>
+
+<!-- ================= SYLLABUS ================= -->
+<section class="view" id="v-syl">
+  <h2 class="sec">Split-up Syllabus Tracker — Preloaded from your school syllabus (Oct → Feb)</h2>
+  <div id="sylList"></div>
+</section>
+
+<!-- ================= PERFORMANCE ================= -->
+<section class="view" id="v-perf">
+  <div class="grid g4" id="perfStats"></div>
+  <div class="card" style="margin-top:14px">
+    <h2 class="sec">Study Time per Week (hours)</h2>
+    <div class="weeks" id="weekChart"></div>
+  </div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <h2 class="sec">Subject-wise Goal Completion</h2>
+      <div class="subjmini" id="perfSubj"></div>
+    </div>
+    <div class="card">
+      <h2 class="sec">Test / Exam Scores</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label class="f">Subject</label><select id="tSubj"></select></div>
+        <div><label class="f">Date</label><input type="date" id="tDate"></div>
+        <div><label class="f">Test name</label><input type="text" id="tName" placeholder="e.g. Class Test — Mensuration"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><label class="f">Score</label><input type="number" id="tScore" min="0" placeholder="42"></div>
+          <div><label class="f">Out of</label><input type="number" id="tMax" min="1" placeholder="50"></div>
+        </div>
+      </div>
+      <button class="btn pri sm" style="margin-top:12px" onclick="addTest()">+ Log score</button>
+      <div id="testList" style="margin-top:14px"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>SemTrack · Class VIII semester companion · Designed daily plan pre-loaded (Oct 2026 – Feb 2027) · Data saved in this browser — use ⭳ for backup</footer>
+</div>
+
+<!-- day side panel -->
+<div class="daypanel" id="panel">
+  <div class="ph"><h3 id="pTitle">Day</h3><button onclick="closePanel()">✕</button></div>
+  <div class="pb" id="pBody"></div>
+  <div class="pf">
+    <label class="f">Subject</label>
+    <select id="gSubj"></select>
+    <label class="f">Topic / Goal</label>
+    <input type="text" id="gTopic" placeholder="e.g. Mensuration — surface area practice" list="sylSug">
+    <datalist id="sylSug"></datalist>
+    <label class="f">Target time (minutes)</label>
+    <input type="number" id="gMin" min="10" step="5" value="60">
+    <button class="btn pri" style="width:100%;margin-top:14px" onclick="addGoal()">+ Add Goal</button>
+    <div class="hint">Tip: type a few letters — syllabus topics of the subject auto-suggest.</div>
+  </div>
+</div>
+
+<noscript><div style="max-width:900px;margin:20px auto;padding:16px 20px;border:1px solid #f472b6;border-radius:14px;background:#1a0b14;color:#f9a8d4;font-family:sans-serif;line-height:1.5">
+⚠️ JavaScript is not running — this file was opened in a preview or with JS disabled.
+Close this and open <b>semester-goal-tracker.html</b> directly in Chrome / Firefox / Safari (double-click on computer, or "Open with Chrome" on phone).
+</div></noscript>
+<div id="storewarn" style="display:none;max-width:1200px;margin:0 auto 14px;padding:12px 18px;border:1px solid #fbbf24;border-radius:14px;background:rgba(251,191,36,.08);color:#fde68a;font-size:.84rem;line-height:1.5">
+⚠️ Browser storage is blocked (private/incognito mode ya preview). App chalega aur tick bhi hoga, but data browser band hone ke baad save nahi rahega — file ko normal browser window mein kholo.
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= DATA ================= */
+const MONTH_NAMES=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const MON_S=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const DOW_S=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+const SUBJECTS=[
+ {k:"eng",name:"English",color:"#22d3ee"},
+ {k:"hin",name:"Hindi",color:"#f472b6"},
+ {k:"san",name:"Sanskrit",color:"#fbbf24"},
+ {k:"mat",name:"Maths",color:"#818cf8"},
+ {k:"ltrt",name:"Reasoning & Aptitude (LTRT)",color:"#34d399"},
+ {k:"sci",name:"Science",color:"#f87171"},
+ {k:"sst",name:"Social Science",color:"#a78bfa"},
+ {k:"com",name:"Computer (AI)",color:"#38bdf8"},
+ {k:"art",name:"Art",color:"#fb923c"},
+];
+const SUBJ=Object.fromEntries(SUBJECTS.map(s=>[s.k,s]));
+
+/* Preloaded split-up syllabus Oct 2026 → Feb 2027 (from school syllabus PDF) */
+const SEED={
+eng:[
+ ["Oct","Text-6: Reading for Comprehension (Pg 213)"],
+ ["Oct","U-5: You are Old, Father William (Poem) — Lewis Carroll"],
+ ["Oct","Grammar: Prepositions, Conjunctions, Modals"],
+ ["Oct","Vocabulary: Idioms and Phrases (Pg 226)"],
+ ["Nov","Text-1: Reading for Inference (Pg 215)"],
+ ["Nov","U-6: IF (Poem) — Rudyard Kipling"],
+ ["Nov","U-6: An Interview with P.V. Sindhu"],
+ ["Nov","Grammar: Tenses, Subject–Verb Agreement"],
+ ["Dec","Text-2: Reading for Inference (Pg 217)"],
+ ["Dec","U-7: A Different Kind of School — E.V. Lucas"],
+ ["Dec","U-8: Damon and Pythias (Play)"],
+ ["Dec","Grammar: Voice"],
+ ["Dec","Writing Corner: Analytical Paragraph"],
+ ["Jan","Text-3 (Pg 220) & Text-4 (Pg 222)"],
+ ["Jan","Grammar: Conditionals"],
+ ["Jan","Grammar: Direct & Indirect Speech"],
+ ["Feb","Full Revision"],
+],
+hin:[
+ ["Oct","अपठित गद्यांश-3"],
+ ["Oct","व्याकरण: पाठ 14 क्रिया · पाठ 15 काल · पाठ 16 अव्यय"],
+ ["Oct","पाठ 4: श्रुतिसम भिन्नार्थक शब्द"],
+ ["Oct","साहित्य: पाठ 9 रानी चश्मा · पाठ 11 पानी और पुल"],
+ ["Oct","क्रिया कलाप: कबीर वाणी — सस्वर दोहा वाचन"],
+ ["Nov","व्याकरण: पाठ 17 पद परिचय"],
+ ["Nov","साहित्य: पाठ 13 अंतर नाक न होती · पाठ 14 मन की बात"],
+ ["Nov","लेखन: मेल लेखन"],
+ ["Dec","अपठित काव्यांश 3–4"],
+ ["Dec","व्याकरण: पाठ 19 श्रुति/बदल प्रसंग · पाठ 20 विराम चिन्ह"],
+ ["Dec","साहित्य: पाठ 15 संदेह मारण · पाठ 10 बेलाकुलाकुन दुई पधुर"],
+ ["Dec","लेखन: विवरणात्मक लेखन"],
+ ["Dec","क्रिया कलाप: पाठ 8 — नाट्यमंचन"],
+ ["Jan","व्याकरण: पाठ 21 अलंकार · पाठ 22 मुहावरे एवं लोकोक्तियाँ"],
+ ["Jan","अपरिचित काव्यांश / गद्यांश"],
+ ["Jan","परियोजना: पाठ 16 — लुट्ट पान्जर की खोज"],
+ ["Jan","पुनरावृत्ति"],
+ ["Feb","पुनरावृत्ति (Full Revision)"],
+],
+san:[
+ ["Oct","पाठ 1: अमृत वचनानी (कंठस्थ)"],
+ ["Oct","पाठ 7: वृद्धेश कछुम"],
+ ["Oct","पाठ 12: गुरु भक्ति"],
+ ["Oct","शब्द रूप: इदम् (तीनों लिंग)"],
+ ["Nov","पाठ 11: नीति कथानी"],
+ ["Nov","पाठ 13: चतुर मण्डु"],
+ ["Nov","पाठ 15: कुपमलता"],
+ ["Dec","पाठ 16: वासर: मासक"],
+ ["Dec","पाठ 17: शीघ्रं अस्तु"],
+ ["Dec","संख्या 61–100 (पृष्ठ 114–115)"],
+ ["Jan","शब्द रूप: लकार"],
+ ["Jan","पुनरावृत्ति"],
+ ["Feb","पुनरावृत्ति (Full Revision)"],
+],
+mat:[
+ ["Oct","Ch 7: Compound Interest"],
+ ["Oct","Ch 12: Understanding Quadrilaterals"],
+ ["Oct","Ch 13: Construction of Quadrilaterals"],
+ ["Oct","Lab Activity 5"],
+ ["Nov","Ch 13: Construction of Quadrilaterals (contd.)"],
+ ["Nov","Ch 8: Ratio and Proportion"],
+ ["Nov","Lab Activity 6"],
+ ["Dec","Ch 11: Linear Equations in One Variable"],
+ ["Dec","Ch 16: Mensuration"],
+ ["Dec","Ch 17: Data Handling"],
+ ["Dec","Lab Activity 7"],
+ ["Jan","Ch 17: Data Handling (contd.)"],
+ ["Jan","Ch 15: Exploring Some Geometric Themes"],
+ ["Feb","Full Revision"],
+],
+ltrt:[
+ ["Oct","L-14: Venn Diagrams"],
+ ["Oct","L-15: Puzzle Test"],
+ ["Oct","QA L-16: Numbers"],
+ ["Nov","L-17: Series"],
+ ["Nov","L-18: Mathematical Operations"],
+ ["Nov","L-19: Age"],
+ ["Dec","L-20: Fractions & Decimals"],
+ ["Dec","L-21: Percentage"],
+ ["Dec","L-22: Figure Counting"],
+ ["Jan","L-23: Cubes and Dice"],
+ ["Jan","L-24: Data Analysis"],
+ ["Feb","Full Revision"],
+],
+sci:[
+ ["Oct","Ch 12: How Nature Works in Harmony"],
+ ["Oct","Ch 9: The Amazing World of Solutes, Solvents and Solutions"],
+ ["Nov","Ch 6: Pressure, Winds, Storms and Cyclones"],
+ ["Nov","Ch 13: Our Home: Earth, a Unique Life Sustaining Planet"],
+ ["Dec","Ch 10: Light: Mirrors and Lenses"],
+ ["Dec","Ch 11: Keeping Time with the Skies"],
+ ["Jan","Full Revision"],
+ ["Feb","Full Revision"],
+],
+sst:[
+ ["Oct","History L-6: Civilising the Native, Educating the Nation"],
+ ["Oct","Civics L-4: Judiciary"],
+ ["Nov","History L-7: Women, Caste and Reform"],
+ ["Nov","Geography L-4: Industries"],
+ ["Dec","History L-8: The Making of the National Movement"],
+ ["Dec","Civics L-5: Understanding Marginalisation"],
+ ["Jan","Civics L-8: Law and Social Justice"],
+ ["Jan","Geography L-5: Human Resources"],
+ ["Feb","Full Revision"],
+],
+com:[
+ ["Oct","Ch 4: Career Opportunities in AI"],
+ ["Nov","Ch 5: Artificial Intelligence Ethics"],
+ ["Dec","Ch 3: Sustainable Development Goals"],
+ ["Jan","Revision"],
+ ["Feb","Revision"],
+],
+art:[
+ ["Oct","Peacock · Baby Dragon · Stippling · Necklace"],
+ ["Nov","Flowers · Unicorn · Lion (Origami) · Nestling"],
+ ["Dec","Scenery · Quilling Chicks · Glass Painting · Avenger"],
+ ["Jan","Paper Flower · Expression · Landscape"],
+ ["Feb","Revision"],
+],
+};
+
+const MILESTONES=[
+ {name:"3rd Comparative Exam", when:"2027-03-01", note:"March 2027 — full-course syllabus"},
+];
+const QUOTES=[
+ "Discipline is choosing between what you want now and what you want most.",
+ "Small daily improvements are the key to staggering long-term results.",
+ "You don't rise to the level of your goals, you fall to the level of your systems.",
+ "The secret of getting ahead is getting started.",
+ "Study hard, for the well is deep, and our brains are shallow.",
+ "Consistency beats intensity — show up every single day.",
+];
+
+/* ================= PRE-DESIGNED SEMESTER PLAN (Oct 2026 - Feb 2027) ================= */
+const PRESEED_GOALS = {"2026-10-01":[{"id":"p0001","s":"sst","t":"SST · History L-6 Civilising the Native, Educating the Nation — session 1/2","m":60,"done":false},{"id":"p0002","s":"ltrt","t":"LTRT · L-14 Venn Diagrams — practice sets — session 1/2","m":45,"done":false}],"2026-10-02":[{"id":"p0003","s":"mat","t":"Maths · Ch 7 Compound Interest — concept + solved examples — session 1/2","m":90,"done":false},{"id":"p0004","s":"sci","t":"Science · Ch 12 How Nature Works in Harmony — concept — session 1/2","m":90,"done":false}],"2026-10-03":[{"id":"p0005","s":"eng","t":"English · Text-6 Reading for Comprehension (timed passage)","m":45,"done":false},{"id":"p0006","s":"ltrt","t":"LTRT · L-14 Venn Diagrams — practice sets — session 2/2","m":45,"done":false}],"2026-10-04":[{"id":"p0007","s":"mat","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0008","s":"art","t":"Art · Peacock / Baby Dragon / Stippling / Necklace — any one","m":45,"done":false}],"2026-10-05":[{"id":"p0009","s":"eng","t":"English · U-5 You are Old, Father William (Poem) — theme + Q&A","m":60,"done":false},{"id":"p0010","s":"com","t":"Computer · Ch 4 Career Opportunities in AI — session 1/2","m":60,"done":false}],"2026-10-06":[{"id":"p0011","s":"mat","t":"Maths · Ch 7 Compound Interest — concept + solved examples — session 2/2","m":90,"done":false},{"id":"p0012","s":"sci","t":"Science · Ch 12 How Nature Works in Harmony — concept — session 2/2","m":90,"done":false}],"2026-10-07":[{"id":"p0013","s":"hin","t":"हिंदी · अपठित गद्यांश-3 — practice set","m":45,"done":false},{"id":"p0014","s":"san","t":"संस्कृत · पाठ 1 अमृत वचनानी — कंठस्थ","m":30,"done":false}],"2026-10-08":[{"id":"p0015","s":"sst","t":"SST · History L-6 Civilising the Native, Educating the Nation — session 2/2","m":60,"done":false},{"id":"p0016","s":"ltrt","t":"LTRT · L-15 Puzzle Test — practice sets — session 1/2","m":45,"done":false}],"2026-10-09":[{"id":"p0017","s":"mat","t":"Maths · Ch 7 Compound Interest — problem set (25 Qs)","m":90,"done":false},{"id":"p0018","s":"sci","t":"Science · Ch 12 — exercise + diagrams","m":60,"done":false}],"2026-10-10":[{"id":"p0019","s":"com","t":"Computer · Ch 4 Career Opportunities in AI — session 2/2","m":60,"done":false},{"id":"p0020","s":"ltrt","t":"LTRT · L-15 Puzzle Test — practice sets — session 2/2","m":45,"done":false}],"2026-10-11":[{"id":"p0021","s":"sci","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0022","s":"art","t":"Art · Peacock / Baby Dragon / Stippling / Necklace — any one","m":45,"done":false}],"2026-10-12":[{"id":"p0023","s":"eng","t":"English · Grammar: Prepositions, Conjunctions, Modals — session 1/2","m":60,"done":false},{"id":"p0024","s":"com","t":"Computer · AI concepts flash revision","m":60,"done":false}],"2026-10-13":[{"id":"p0025","s":"mat","t":"Maths · Ch 12 Understanding Quadrilaterals — properties & types — session 1/2","m":90,"done":false},{"id":"p0026","s":"sci","t":"Science · Ch 9 Solutes, Solvents & Solutions — concept — session 1/2","m":90,"done":false}],"2026-10-14":[{"id":"p0027","s":"hin","t":"हिंदी · व्याकरण पाठ 14 क्रिया · 15 काल · 16 अव्यय — session 1/2","m":60,"done":false},{"id":"p0028","s":"san","t":"संस्कृत · पाठ 7 वृद्धेश कछुम — अनुवाद + अभ्यास — session 1/2","m":60,"done":false}],"2026-10-15":[{"id":"p0029","s":"sst","t":"SST · Civics L-4 Judiciary — session 1/2","m":60,"done":false},{"id":"p0030","s":"ltrt","t":"Quantitative Aptitude · L-16 Numbers — speed drill — session 1/2","m":45,"done":false}],"2026-10-16":[{"id":"p0031","s":"mat","t":"Maths · Ch 12 Understanding Quadrilaterals — properties & types — session 2/2","m":90,"done":false},{"id":"p0032","s":"sci","t":"Science · Ch 9 Solutes, Solvents & Solutions — concept — session 2/2","m":90,"done":false}],"2026-10-17":[{"id":"p0033","s":"eng","t":"English · Grammar: Prepositions, Conjunctions, Modals — session 2/2","m":60,"done":false},{"id":"p0034","s":"ltrt","t":"Quantitative Aptitude · L-16 Numbers — speed drill — session 2/2","m":45,"done":false}],"2026-10-18":[{"id":"p0035","s":"eng","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0036","s":"art","t":"Art · Peacock / Baby Dragon / Stippling / Necklace — any one","m":45,"done":false}],"2026-10-19":[{"id":"p0037","s":"eng","t":"English · Vocabulary: Idioms & Phrases (Pg 226)","m":45,"done":false},{"id":"p0038","s":"com","t":"Computer · practical / code review","m":60,"done":false}],"2026-10-20":[{"id":"p0039","s":"mat","t":"Maths · Ch 12 Quadrilaterals — exercise practice","m":60,"done":false},{"id":"p0040","s":"sci","t":"Science · Ch 9 — numericals + exercise","m":60,"done":false}],"2026-10-21":[{"id":"p0041","s":"hin","t":"हिंदी · व्याकरण पाठ 14 क्रिया · 15 काल · 16 अव्यय — session 2/2","m":60,"done":false},{"id":"p0042","s":"san","t":"संस्कृत · पाठ 7 वृद्धेश कछुम — अनुवाद + अभ्यास — session 2/2","m":60,"done":false}],"2026-10-22":[{"id":"p0043","s":"sst","t":"SST · Civics L-4 Judiciary — session 2/2","m":60,"done":false},{"id":"p0044","s":"ltrt","t":"LTRT · mixed puzzle practice — 20 Qs (timed)","m":45,"done":false}],"2026-10-23":[{"id":"p0045","s":"mat","t":"Maths · Ch 13 Construction of Quadrilaterals — session 1/2","m":60,"done":false},{"id":"p0046","s":"sci","t":"Science · chapter-end Q&A + back exercises","m":60,"done":false}],"2026-10-24":[{"id":"p0047","s":"com","t":"Computer · AI concepts flash revision","m":60,"done":false},{"id":"p0048","s":"ltrt","t":"LTRT · quantitative aptitude speed drill","m":45,"done":false}],"2026-10-25":[{"id":"p0049","s":"hin","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0050","s":"art","t":"Art · Peacock / Baby Dragon / Stippling / Necklace — any one","m":45,"done":false}],"2026-10-26":[{"id":"p0051","s":"eng","t":"English · reading comprehension drill (1 timed passage)","m":60,"done":false},{"id":"p0052","s":"com","t":"Computer · practical / code review","m":60,"done":false}],"2026-10-27":[{"id":"p0053","s":"mat","t":"Maths · Ch 13 Construction of Quadrilaterals — session 2/2","m":60,"done":false},{"id":"p0054","s":"sci","t":"Science · diagrams & formula flash revision","m":60,"done":false}],"2026-10-28":[{"id":"p0055","s":"hin","t":"हिंदी · पाठ 4 श्रुतिसम भिन्नार्थक शब्द — drill","m":45,"done":false},{"id":"p0056","s":"san","t":"संस्कृत · पाठ 12 गुरु भक्ति — अनुवाद + अभ्यास — session 1/2","m":60,"done":false}],"2026-10-29":[{"id":"p0057","s":"sst","t":"SST · map work + timeline drill","m":60,"done":false},{"id":"p0058","s":"ltrt","t":"LTRT · previous-pattern practice set","m":45,"done":false}],"2026-10-30":[{"id":"p0059","s":"mat","t":"Maths · Lab Activity 5","m":45,"done":false},{"id":"p0060","s":"sci","t":"Science · PYQ practice — 15 Qs (timed)","m":60,"done":false}],"2026-10-31":[{"id":"p0061","s":"eng","t":"English · grammar rapid-fire — 30 Qs","m":60,"done":false},{"id":"p0062","s":"ltrt","t":"LTRT · mixed puzzle practice — 20 Qs (timed)","m":45,"done":false},{"id":"p0063","s":"ltrt","t":"Month-end · syllabus tick check ✔ — is mahine ke saare topics done?","m":20,"done":false}],"2026-11-01":[{"id":"p0064","s":"sst","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0065","s":"art","t":"Art · Flowers / Unicorn / Lion Origami / Nestling — any one","m":45,"done":false}],"2026-11-02":[{"id":"p0066","s":"eng","t":"English · Text-1 Reading for Inference (timed passage)","m":45,"done":false},{"id":"p0067","s":"com","t":"Computer · Ch 5 AI Ethics — session 1/2","m":60,"done":false}],"2026-11-03":[{"id":"p0068","s":"mat","t":"Maths · Ch 13 Construction (contd.) — tough constructions + PYQs","m":60,"done":false},{"id":"p0069","s":"sci","t":"Science · Ch 6 Pressure, Winds, Storms & Cyclones — session 1/3","m":90,"done":false}],"2026-11-04":[{"id":"p0070","s":"hin","t":"हिंदी · व्याकरण पाठ 17 पद परिचय — session 1/2","m":60,"done":false},{"id":"p0071","s":"san","t":"संस्कृत · पाठ 11 नीति कथानी — अनुवाद + अभ्यास — session 1/2","m":60,"done":false}],"2026-11-05":[{"id":"p0072","s":"sst","t":"SST · History L-7 Women, Caste and Reform — session 1/2","m":60,"done":false},{"id":"p0073","s":"ltrt","t":"LTRT · L-17 Series — practice sets — session 1/2","m":45,"done":false}],"2026-11-06":[{"id":"p0074","s":"mat","t":"Maths · Ch 8 Ratio & Proportion — concept + examples — session 1/2","m":90,"done":false},{"id":"p0075","s":"sci","t":"Science · Ch 6 Pressure, Winds, Storms & Cyclones — session 2/3","m":90,"done":false}],"2026-11-07":[{"id":"p0076","s":"com","t":"Computer · Ch 5 AI Ethics — session 2/2","m":60,"done":false},{"id":"p0077","s":"ltrt","t":"LTRT · L-17 Series — practice sets — session 2/2","m":45,"done":false}],"2026-11-08":[{"id":"p0078","s":"com","t":"🪔 दीपावली — enjoy the day! Light 30 min: formula flash cards","m":30,"done":false}],"2026-11-09":[{"id":"p0079","s":"eng","t":"English · U-6 IF (Poem) — Kipling, theme + poetic devices — session 1/2","m":60,"done":false},{"id":"p0080","s":"com","t":"Computer · AI concepts flash revision","m":60,"done":false}],"2026-11-10":[{"id":"p0081","s":"mat","t":"Maths · Ch 8 Ratio & Proportion — concept + examples — session 2/2","m":90,"done":false},{"id":"p0082","s":"sci","t":"Science · Ch 6 Pressure, Winds, Storms & Cyclones — session 3/3","m":90,"done":false}],"2026-11-11":[{"id":"p0083","s":"hin","t":"हिंदी · व्याकरण पाठ 17 पद परिचय — session 2/2","m":60,"done":false},{"id":"p0084","s":"san","t":"संस्कृत · पाठ 11 नीति कथानी — अनुवाद + अभ्यास — session 2/2","m":60,"done":false}],"2026-11-12":[{"id":"p0085","s":"sst","t":"SST · History L-7 Women, Caste and Reform — session 2/2","m":60,"done":false},{"id":"p0086","s":"ltrt","t":"LTRT · L-18 Mathematical Operations — practice — session 1/2","m":45,"done":false}],"2026-11-13":[{"id":"p0087","s":"mat","t":"Maths · Ch 8 Ratio & Proportion — word problem set","m":90,"done":false},{"id":"p0088","s":"sci","t":"Science · Ch 6 — diagram + map practice","m":60,"done":false}],"2026-11-14":[{"id":"p0089","s":"eng","t":"English · U-6 IF (Poem) — Kipling, theme + poetic devices — session 2/2","m":60,"done":false},{"id":"p0090","s":"ltrt","t":"LTRT · L-18 Mathematical Operations — practice — session 2/2","m":45,"done":false}],"2026-11-15":[{"id":"p0091","s":"san","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0092","s":"art","t":"Art · Flowers / Unicorn / Lion Origami / Nestling — any one","m":45,"done":false}],"2026-11-16":[{"id":"p0093","s":"eng","t":"English · U-6 An Interview with P.V. Sindhu — Q&A","m":60,"done":false},{"id":"p0094","s":"com","t":"Computer · practical / code review","m":60,"done":false}],"2026-11-17":[{"id":"p0095","s":"mat","t":"Maths · Lab Activity 6","m":45,"done":false},{"id":"p0096","s":"sci","t":"Science · Ch 13 Our Home: Earth — concept + exercise — session 1/2","m":90,"done":false}],"2026-11-18":[{"id":"p0097","s":"hin","t":"हिंदी · साहित्य: पाठ 13 अंतर नाक न होती · पाठ 14 मन की बात — session 1/2","m":60,"done":false},{"id":"p0098","s":"san","t":"संस्कृत · पाठ 13 चतुर मण्डु — अनुवाद + अभ्यास — session 1/2","m":60,"done":false}],"2026-11-19":[{"id":"p0099","s":"sst","t":"SST · Geography L-4 Industries — session 1/2","m":60,"done":false},{"id":"p0100","s":"ltrt","t":"LTRT · L-19 Age problems","m":45,"done":false}],"2026-11-20":[{"id":"p0101","s":"mat","t":"Maths · PYQ speed round — 20 mixed Qs (timed)","m":60,"done":false},{"id":"p0102","s":"sci","t":"Science · Ch 13 Our Home: Earth — concept + exercise — session 2/2","m":90,"done":false}],"2026-11-21":[{"id":"p0103","s":"com","t":"Computer · AI concepts flash revision","m":60,"done":false},{"id":"p0104","s":"ltrt","t":"LTRT · quantitative aptitude speed drill","m":45,"done":false}],"2026-11-22":[{"id":"p0105","s":"mat","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0106","s":"art","t":"Art · Flowers / Unicorn / Lion Origami / Nestling — any one","m":45,"done":false}],"2026-11-23":[{"id":"p0107","s":"eng","t":"English · Grammar: Tenses + Subject–Verb Agreement — session 1/2","m":60,"done":false},{"id":"p0108","s":"com","t":"Computer · practical / code review","m":60,"done":false}],"2026-11-24":[{"id":"p0109","s":"mat","t":"Maths · weak-topic redo from error log","m":60,"done":false},{"id":"p0110","s":"sci","t":"Science · Ch 13 — PYQ practice","m":60,"done":false}],"2026-11-25":[{"id":"p0111","s":"hin","t":"हिंदी · साहित्य: पाठ 13 अंतर नाक न होती · पाठ 14 मन की बात — session 2/2","m":60,"done":false},{"id":"p0112","s":"san","t":"संस्कृत · पाठ 13 चतुर मण्डु — अनुवाद + अभ्यास — session 2/2","m":60,"done":false}],"2026-11-26":[{"id":"p0113","s":"sst","t":"SST · Geography L-4 Industries — session 2/2","m":60,"done":false},{"id":"p0114","s":"ltrt","t":"LTRT · previous-pattern practice set","m":45,"done":false}],"2026-11-27":[{"id":"p0115","s":"mat","t":"Maths · formula sheet self-quiz + mental math drill","m":60,"done":false},{"id":"p0116","s":"sci","t":"Science · chapter-end Q&A + back exercises","m":60,"done":false}],"2026-11-28":[{"id":"p0117","s":"eng","t":"English · Grammar: Tenses + Subject–Verb Agreement — session 2/2","m":60,"done":false},{"id":"p0118","s":"ltrt","t":"LTRT · mixed puzzle practice — 20 Qs (timed)","m":45,"done":false}],"2026-11-29":[{"id":"p0119","s":"sci","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0120","s":"ltrt","t":"Backlog buffer — finish any pending goals of the week","m":45,"done":false}],"2026-11-30":[{"id":"p0121","s":"eng","t":"English · writing practice — one piece","m":60,"done":false},{"id":"p0122","s":"com","t":"Computer · AI concepts flash revision","m":60,"done":false},{"id":"p0123","s":"ltrt","t":"Month-end · syllabus tick check ✔ — is mahine ke saare topics done?","m":20,"done":false}],"2026-12-01":[{"id":"p0124","s":"mat","t":"Maths · Ch 11 Linear Equations in One Variable — session 1/3","m":90,"done":false},{"id":"p0125","s":"sci","t":"Science · Ch 10 Light: Mirrors & Lenses — concept — session 1/3","m":90,"done":false}],"2026-12-02":[{"id":"p0126","s":"hin","t":"हिंदी · अपठित काव्यांश 3–4 — practice sets","m":45,"done":false},{"id":"p0127","s":"san","t":"संस्कृत · पाठ 16 वासर: मासक — अनुवाद + अभ्यास — session 1/2","m":60,"done":false}],"2026-12-03":[{"id":"p0128","s":"sst","t":"SST · History L-8 The Making of the National Movement — session 1/2","m":60,"done":false},{"id":"p0129","s":"ltrt","t":"LTRT · L-20 Fractions & Decimals — session 1/2","m":45,"done":false}],"2026-12-04":[{"id":"p0130","s":"mat","t":"Maths · Ch 11 Linear Equations in One Variable — session 2/3","m":90,"done":false},{"id":"p0131","s":"sci","t":"Science · Ch 10 Light: Mirrors & Lenses — concept — session 2/3","m":90,"done":false}],"2026-12-05":[{"id":"p0132","s":"com","t":"Computer · Ch 3 Sustainable Development Goals — session 1/2","m":60,"done":false},{"id":"p0133","s":"ltrt","t":"LTRT · L-20 Fractions & Decimals — session 2/2","m":45,"done":false}],"2026-12-06":[{"id":"p0134","s":"eng","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0135","s":"art","t":"Art · Scenery / Quilling / Glass Painting — any one","m":45,"done":false}],"2026-12-07":[{"id":"p0136","s":"eng","t":"English · Text-2 Reading for Inference (timed passage)","m":45,"done":false},{"id":"p0137","s":"com","t":"Computer · Ch 3 Sustainable Development Goals — session 2/2","m":60,"done":false}],"2026-12-08":[{"id":"p0138","s":"mat","t":"Maths · Ch 11 Linear Equations in One Variable — session 3/3","m":90,"done":false},{"id":"p0139","s":"sci","t":"Science · Ch 10 Light: Mirrors & Lenses — concept — session 3/3","m":90,"done":false}],"2026-12-09":[{"id":"p0140","s":"hin","t":"हिंदी · व्याकरण पाठ 19 श्रुति/बदल प्रसंग · पाठ 20 विराम चिन्ह — session 1/2","m":60,"done":false},{"id":"p0141","s":"san","t":"संस्कृत · पाठ 16 वासर: मासक — अनुवाद + अभ्यास — session 2/2","m":60,"done":false}],"2026-12-10":[{"id":"p0142","s":"sst","t":"SST · History L-8 The Making of the National Movement — session 2/2","m":60,"done":false},{"id":"p0143","s":"ltrt","t":"LTRT · L-21 Percentage — session 1/2","m":45,"done":false}],"2026-12-11":[{"id":"p0144","s":"mat","t":"Maths · Ch 16 Mensuration — surface area & volume — session 1/3","m":90,"done":false},{"id":"p0145","s":"sci","t":"Science · Ch 10 — ray diagrams practice","m":60,"done":false}],"2026-12-12":[{"id":"p0146","s":"eng","t":"English · U-7 A Different Kind of School — reading + Q&A — session 1/2","m":60,"done":false},{"id":"p0147","s":"ltrt","t":"LTRT · L-21 Percentage — session 2/2","m":45,"done":false}],"2026-12-13":[{"id":"p0148","s":"hin","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0149","s":"art","t":"Art · Scenery / Quilling / Glass Painting — any one","m":45,"done":false}],"2026-12-14":[{"id":"p0150","s":"eng","t":"English · U-7 A Different Kind of School — reading + Q&A — session 2/2","m":60,"done":false},{"id":"p0151","s":"com","t":"Computer · practical / code review","m":60,"done":false}],"2026-12-15":[{"id":"p0152","s":"mat","t":"Maths · Ch 16 Mensuration — surface area & volume — session 2/3","m":90,"done":false},{"id":"p0153","s":"sci","t":"Science · Ch 11 Keeping Time with the Skies — session 1/2","m":90,"done":false}],"2026-12-16":[{"id":"p0154","s":"hin","t":"हिंदी · व्याकरण पाठ 19 श्रुति/बदल प्रसंग · पाठ 20 विराम चिन्ह — session 2/2","m":60,"done":false},{"id":"p0155","s":"san","t":"संस्कृत · पाठ 17 शीघ्रं अस्तु — अनुवाद + अभ्यास — session 1/2","m":60,"done":false}],"2026-12-17":[{"id":"p0156","s":"sst","t":"SST · Civics L-5 Understanding Marginalisation — session 1/2","m":60,"done":false},{"id":"p0157","s":"ltrt","t":"LTRT · L-22 Figure Counting","m":45,"done":false}],"2026-12-18":[{"id":"p0158","s":"mat","t":"Maths · Ch 16 Mensuration — surface area & volume — session 3/3","m":90,"done":false},{"id":"p0159","s":"sci","t":"Science · Ch 11 Keeping Time with the Skies — session 2/2","m":90,"done":false}],"2026-12-19":[{"id":"p0160","s":"com","t":"Computer · AI concepts flash revision","m":60,"done":false},{"id":"p0161","s":"ltrt","t":"LTRT · quantitative aptitude speed drill","m":45,"done":false}],"2026-12-20":[{"id":"p0162","s":"sst","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0163","s":"art","t":"Art · Scenery / Quilling / Glass Painting — any one","m":45,"done":false}],"2026-12-21":[{"id":"p0164","s":"eng","t":"English · U-8 Damon and Pythias (Play) — characters + Q&A — session 1/2","m":60,"done":false},{"id":"p0165","s":"com","t":"Computer · practical / code review","m":60,"done":false}],"2026-12-22":[{"id":"p0166","s":"mat","t":"Maths · Ch 16 Mensuration — problem set + PYQs","m":90,"done":false},{"id":"p0167","s":"sci","t":"Science · diagrams & formula flash revision","m":60,"done":false}],"2026-12-23":[{"id":"p0168","s":"hin","t":"हिंदी · साहित्य: पाठ 15 संदेह मारण · पाठ 10 बेलाकुलाकुन दुई पधुर — session 1/2","m":60,"done":false},{"id":"p0169","s":"san","t":"संस्कृत · पाठ 17 शीघ्रं अस्तु — अनुवाद + अभ्यास — session 2/2","m":60,"done":false}],"2026-12-24":[{"id":"p0170","s":"sst","t":"SST · Civics L-5 Understanding Marginalisation — session 2/2","m":60,"done":false},{"id":"p0171","s":"ltrt","t":"LTRT · previous-pattern practice set","m":45,"done":false}],"2026-12-25":[{"id":"p0172","s":"mat","t":"Winter break · formula & definitions flash review","m":45,"done":false}],"2026-12-26":[{"id":"p0173","s":"sci","t":"Winter break · diagram + map practice","m":45,"done":false}],"2026-12-27":[{"id":"p0174","s":"eng","t":"Winter break · grammar rapid-fire","m":45,"done":false}],"2026-12-28":[{"id":"p0175","s":"mat","t":"Winter break · PYQ speed round","m":45,"done":false}],"2026-12-29":[{"id":"p0176","s":"hin","t":"Winter break · reading + poetry recap","m":45,"done":false}],"2026-12-30":[{"id":"p0177","s":"ltrt","t":"Winter break · mixed revision quiz","m":45,"done":false}],"2026-12-31":[{"id":"p0178","s":"sst","t":"Winter break · backlog buffer — finish pending goals","m":45,"done":false}],"2027-01-01":[{"id":"p0179","s":"eng","t":"New Year · light recap + plan the next month","m":45,"done":false}],"2027-01-02":[{"id":"p0180","s":"com","t":"Computer · full revision","m":60,"done":false},{"id":"p0181","s":"ltrt","t":"LTRT · L-23 Cubes and Dice — session 1/2","m":45,"done":false}],"2027-01-03":[{"id":"p0182","s":"san","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0183","s":"art","t":"Art · Paper Flower / Expression / Landscape — any one","m":45,"done":false}],"2027-01-04":[{"id":"p0184","s":"eng","t":"English · Text-3 & Text-4 Reading for Inference","m":45,"done":false},{"id":"p0185","s":"com","t":"Computer · AI concepts flash revision","m":60,"done":false}],"2027-01-05":[{"id":"p0186","s":"mat","t":"Maths · Ch 17 Data Handling (contd.) — graphs practice","m":90,"done":false},{"id":"p0187","s":"sci","t":"Science · पुनरावृत्ति — Ch 3-5 (Health, Electricity, Forces)","m":90,"done":false}],"2027-01-06":[{"id":"p0188","s":"hin","t":"हिंदी · व्याकरण पाठ 21 अलंकार · पाठ 22 मुहावरे एवं लोकोक्तियाँ — session 1/2","m":60,"done":false},{"id":"p0189","s":"san","t":"संस्कृत · शब्द रूप: लकार — drill — session 1/2","m":45,"done":false}],"2027-01-07":[{"id":"p0190","s":"sst","t":"SST · Civics L-8 Law and Social Justice — session 1/2","m":60,"done":false},{"id":"p0191","s":"ltrt","t":"LTRT · L-23 Cubes and Dice — session 2/2","m":45,"done":false}],"2027-01-08":[{"id":"p0192","s":"mat","t":"Maths · Ch 15 Exploring Some Geometric Themes — session 1/2","m":90,"done":false},{"id":"p0193","s":"sci","t":"Science · पुनरावृत्ति — Ch 7-8 (Matter: elements, compounds)","m":90,"done":false}],"2027-01-09":[{"id":"p0194","s":"eng","t":"English · Grammar: Conditionals","m":60,"done":false},{"id":"p0195","s":"ltrt","t":"LTRT · L-24 Data Analysis — session 1/2","m":45,"done":false}],"2027-01-10":[{"id":"p0196","s":"mat","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0197","s":"art","t":"Art · Paper Flower / Expression / Landscape — any one","m":45,"done":false}],"2027-01-11":[{"id":"p0198","s":"eng","t":"English · Grammar: Direct & Indirect Speech — session 1/2","m":60,"done":false},{"id":"p0199","s":"com","t":"Computer · practical / code review","m":60,"done":false}],"2027-01-12":[{"id":"p0200","s":"mat","t":"Maths · Ch 15 Exploring Some Geometric Themes — session 2/2","m":90,"done":false},{"id":"p0201","s":"sci","t":"Science · पुनरावृत्ति — Ch 1-2 (Investigative World, Invisible Living)","m":90,"done":false}],"2027-01-13":[{"id":"p0202","s":"hin","t":"हिंदी · व्याकरण पाठ 21 अलंकार · पाठ 22 मुहावरे एवं लोकोक्तियाँ — session 2/2","m":60,"done":false},{"id":"p0203","s":"san","t":"संस्कृत · शब्द रूप: लकार — drill — session 2/2","m":45,"done":false}],"2027-01-14":[{"id":"p0204","s":"sst","t":"SST · Civics L-8 Law and Social Justice — session 2/2","m":60,"done":false},{"id":"p0205","s":"ltrt","t":"LTRT · L-24 Data Analysis — session 2/2","m":45,"done":false}],"2027-01-15":[{"id":"p0206","s":"mat","t":"Maths · PYQ speed round — 20 mixed Qs (timed)","m":60,"done":false},{"id":"p0207","s":"sci","t":"Science · PYQ practice — 15 Qs (timed)","m":60,"done":false}],"2027-01-16":[{"id":"p0208","s":"com","t":"Computer · AI concepts flash revision","m":60,"done":false},{"id":"p0209","s":"ltrt","t":"LTRT · mixed puzzle practice — 20 Qs (timed)","m":45,"done":false}],"2027-01-17":[{"id":"p0210","s":"sci","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0211","s":"art","t":"Art · Paper Flower / Expression / Landscape — any one","m":45,"done":false}],"2027-01-18":[{"id":"p0212","s":"eng","t":"English · Grammar: Direct & Indirect Speech — session 2/2","m":60,"done":false},{"id":"p0213","s":"com","t":"Computer · practical / code review","m":60,"done":false}],"2027-01-19":[{"id":"p0214","s":"mat","t":"Maths · weak-topic redo from error log","m":60,"done":false},{"id":"p0215","s":"sci","t":"Science · chapter-end Q&A + back exercises","m":60,"done":false}],"2027-01-20":[{"id":"p0216","s":"hin","t":"हिंदी · अपरिचित काव्यांश / गद्यांश — practice","m":45,"done":false},{"id":"p0217","s":"san","t":"संस्कृत · पुनरावृत्ति — session 1/2","m":60,"done":false}],"2027-01-21":[{"id":"p0218","s":"sst","t":"SST · Geography L-5 Human Resources — session 1/2","m":60,"done":false},{"id":"p0219","s":"ltrt","t":"LTRT · quantitative aptitude speed drill","m":45,"done":false}],"2027-01-22":[{"id":"p0220","s":"mat","t":"Maths · formula sheet self-quiz + mental math drill","m":60,"done":false},{"id":"p0221","s":"sci","t":"Science · diagrams & formula flash revision","m":60,"done":false}],"2027-01-23":[{"id":"p0222","s":"eng","t":"English · reading comprehension drill (1 timed passage)","m":60,"done":false},{"id":"p0223","s":"ltrt","t":"LTRT · previous-pattern practice set","m":45,"done":false}],"2027-01-24":[{"id":"p0224","s":"eng","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0225","s":"art","t":"Art · Paper Flower / Expression / Landscape — any one","m":45,"done":false}],"2027-01-25":[{"id":"p0226","s":"eng","t":"English · grammar rapid-fire — 30 Qs","m":60,"done":false},{"id":"p0227","s":"com","t":"Computer · AI concepts flash revision","m":60,"done":false}],"2027-01-26":[{"id":"p0228","s":"mat","t":"Maths · PYQ speed round — 20 mixed Qs (timed)","m":60,"done":false},{"id":"p0229","s":"sci","t":"Science · PYQ practice — 15 Qs (timed)","m":60,"done":false}],"2027-01-27":[{"id":"p0230","s":"hin","t":"हिंदी · परियोजना: पाठ 16 लुट्ट पान्जर की खोज","m":60,"done":false},{"id":"p0231","s":"san","t":"संस्कृत · पुनरावृत्ति — session 2/2","m":60,"done":false}],"2027-01-28":[{"id":"p0232","s":"sst","t":"SST · Geography L-5 Human Resources — session 2/2","m":60,"done":false},{"id":"p0233","s":"ltrt","t":"LTRT · mixed puzzle practice — 20 Qs (timed)","m":45,"done":false}],"2027-01-29":[{"id":"p0234","s":"mat","t":"Maths · weak-topic redo from error log","m":60,"done":false},{"id":"p0235","s":"sci","t":"Science · chapter-end Q&A + back exercises","m":60,"done":false}],"2027-01-30":[{"id":"p0236","s":"com","t":"Computer · practical / code review","m":60,"done":false},{"id":"p0237","s":"ltrt","t":"LTRT · quantitative aptitude speed drill","m":45,"done":false}],"2027-01-31":[{"id":"p0238","s":"hin","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0239","s":"ltrt","t":"Backlog buffer — finish any pending goals of the week","m":45,"done":false}],"2027-02-01":[{"id":"p0240","s":"eng","t":"English Revision R1 — Literature: all units quick recap","m":60,"done":false},{"id":"p0241","s":"com","t":"Computer — full AI course revision","m":60,"done":false}],"2027-02-02":[{"id":"p0242","s":"mat","t":"Maths Full Revision R1 — Ch 1, 2, 4 (arithmetic basics)","m":90,"done":false},{"id":"p0243","s":"sci","t":"Science Revision R1 — Ch 3-5 (Health, Electricity, Forces)","m":90,"done":false}],"2027-02-03":[{"id":"p0244","s":"hin","t":"हिंदी पुनरावृत्ति — साहित्य: सभी पाठ quick recap","m":60,"done":false},{"id":"p0245","s":"san","t":"संस्कृत पुनरावृत्ति — पाठ quick recap + अनुवाद","m":60,"done":false}],"2027-02-04":[{"id":"p0246","s":"sst","t":"SST Revision R1 — History all lessons + timeline","m":60,"done":false},{"id":"p0247","s":"ltrt","t":"LTRT — full course L1–L24 mixed set (timed)","m":45,"done":false}],"2027-02-05":[{"id":"p0248","s":"mat","t":"Maths Full Revision R1 — Ch 6, 7 (Percentage, CI)","m":90,"done":false},{"id":"p0249","s":"sci","t":"Science Revision R1 — Ch 6, 9 (Pressure, Solutions)","m":90,"done":false}],"2027-02-06":[{"id":"p0250","s":"mat","t":"Full-length Sample Paper — Maths (timed, exam conditions)","m":120,"done":false},{"id":"p0251","s":"mat","t":"Sample paper analysis + error correction","m":60,"done":false}],"2027-02-07":[{"id":"p0252","s":"sst","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0253","s":"ltrt","t":"Backlog buffer — finish any pending goals of the week","m":45,"done":false}],"2027-02-08":[{"id":"p0254","s":"eng","t":"English Revision — Grammar full sweep","m":60,"done":false},{"id":"p0255","s":"com","t":"Computer · AI concepts flash revision","m":60,"done":false}],"2027-02-09":[{"id":"p0256","s":"mat","t":"Maths Full Revision R1 — Ch 8, 11 (Ratio, Linear Eq.)","m":90,"done":false},{"id":"p0257","s":"sci","t":"Science Revision R1 — Ch 7, 8 (Nature of Matter)","m":90,"done":false}],"2027-02-10":[{"id":"p0258","s":"hin","t":"हिंदी — व्याकरण full sweep (पाठ 1–22)","m":60,"done":false},{"id":"p0259","s":"san","t":"संस्कृत — शब्द/धातु रूप full sweep","m":60,"done":false}],"2027-02-11":[{"id":"p0260","s":"sst","t":"SST Revision — Civics all lessons key points","m":60,"done":false},{"id":"p0261","s":"ltrt","t":"LTRT — quantitative aptitude full revision","m":45,"done":false}],"2027-02-12":[{"id":"p0262","s":"mat","t":"Maths Full Revision R1 — Ch 12, 13, 15 (Geometry)","m":90,"done":false},{"id":"p0263","s":"sci","t":"Science Revision R1 — Ch 10, 11 (Light, Skies)","m":90,"done":false}],"2027-02-13":[{"id":"p0264","s":"sci","t":"Full-length Sample Paper — Science (timed, exam conditions)","m":120,"done":false},{"id":"p0265","s":"sci","t":"Sample paper analysis + error correction","m":60,"done":false}],"2027-02-14":[{"id":"p0266","s":"san","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0267","s":"ltrt","t":"Backlog buffer — finish any pending goals of the week","m":45,"done":false}],"2027-02-15":[{"id":"p0268","s":"eng","t":"English Revision — writing formats + vocabulary","m":60,"done":false},{"id":"p0269","s":"com","t":"Computer · practical / code review","m":60,"done":false}],"2027-02-16":[{"id":"p0270","s":"mat","t":"Maths Full Revision R1 — Ch 16, 17 (Mensuration, Data)","m":90,"done":false},{"id":"p0271","s":"sci","t":"Science Revision R1 — Ch 12, 13 (Harmony, Earth)","m":90,"done":false}],"2027-02-17":[{"id":"p0272","s":"hin","t":"हिंदी — लेखन अभ्यास + अपठित sets","m":60,"done":false},{"id":"p0273","s":"san","t":"संस्कृत — कंठस्थ श्लोक व संख्या final round","m":45,"done":false}],"2027-02-18":[{"id":"p0274","s":"sst","t":"SST Revision — Geography all lessons + map work","m":60,"done":false},{"id":"p0275","s":"ltrt","t":"LTRT · previous-pattern practice set","m":45,"done":false}],"2027-02-19":[{"id":"p0276","s":"mat","t":"Maths · PYQ Marathon — full course 40 Qs (timed)","m":90,"done":false},{"id":"p0277","s":"sci","t":"Science · PYQ set — 25 questions (timed)","m":90,"done":false}],"2027-02-20":[{"id":"p0278","s":"eng","t":"Full-length Sample Paper — English (timed, exam conditions)","m":120,"done":false},{"id":"p0279","s":"eng","t":"Sample paper analysis + error correction","m":60,"done":false}],"2027-02-21":[{"id":"p0280","s":"mat","t":"Monthly Mega Quiz — पूरे महीने का syllabus (timed) + error analysis","m":90,"done":false},{"id":"p0281","s":"ltrt","t":"Backlog buffer — finish any pending goals of the week","m":45,"done":false}],"2027-02-22":[{"id":"p0282","s":"eng","t":"English · writing practice — one piece","m":60,"done":false},{"id":"p0283","s":"com","t":"Computer · AI concepts flash revision","m":60,"done":false}],"2027-02-23":[{"id":"p0284","s":"mat","t":"Maths Full Revision R2 — weak chapters redo","m":90,"done":false},{"id":"p0285","s":"sci","t":"Science · diagrams & formula flash revision","m":60,"done":false}],"2027-02-24":[{"id":"p0286","s":"hin","t":"हिंदी · अपठित गद्यांश/काव्यांश practice (1 set)","m":60,"done":false},{"id":"p0287","s":"san","t":"संस्कृत · शब्द-रूप व धातु-रूप self-quiz","m":60,"done":false}],"2027-02-25":[{"id":"p0288","s":"mat","t":"Exam taper · light revision — formula & dates flash cards","m":45,"done":false}],"2027-02-26":[{"id":"p0289","s":"sci","t":"Exam taper · light revision — diagrams + map glances","m":45,"done":false}],"2027-02-27":[{"id":"p0290","s":"eng","t":"Organise notes, stationery & admit card ✓","m":20,"done":false}],"2027-02-28":[{"id":"p0291","s":"com","t":"Exam mode: rest & sleep early — all the best! 🚀","m":15,"done":false}]};
+
+/* ================= STATE ================= */
+const KEY="semtrack_v2";
+let STORAGE_OK=true,MEMDB=null;
+function stGet(){try{return localStorage.getItem(KEY)}catch(e){STORAGE_OK=false;return MEMDB}}
+function stSet(v){try{localStorage.setItem(KEY,v)}catch(e){STORAGE_OK=false;MEMDB=v}}
+function stDel(){try{localStorage.removeItem(KEY)}catch(e){STORAGE_OK=false;MEMDB=null}}
+let DB;
+function load(){
+  try{DB=JSON.parse(stGet())||null}catch(e){DB=null}
+  if(!DB) DB={goals:{},sylDone:{},custom:[],tests:[],sessions:{}};
+  DB.goals=DB.goals||{};DB.sylDone=DB.sylDone||{};DB.custom=DB.custom||[];DB.tests=DB.tests||{};DB.sessions=DB.sessions||{};
+  if(Array.isArray(DB.tests))DB.tests={}; // legacy guard
+  if(!DB.seeded){ // first run: load the day-by-day designed plan
+    DB.goals=JSON.parse(JSON.stringify(PRESEED_GOALS));DB.seeded=true;stSet(JSON.stringify(DB));
+  }
+}
+function save(){stSet(JSON.stringify(DB))}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+
+/* semester window: Oct 1 2026 → Feb 28 2027 */
+const SEM_START=new Date(2026,9,1), SEM_END=new Date(2027,1,28);
+const CAL_MONTHS=[[2026,9],[2026,10],[2026,11],[2027,0],[2027,1]];
+let calIdx=0, selDate=null;
+
+function dkey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function parseKey(k){const[a,b,c]=k.split("-").map(Number);return new Date(a,b-1,c)}
+function todayKey(){return dkey(new Date())}
+function selKey(){return selDate||todayKey()}
+function inSem(d){return d>=SEM_START&&d<=SEM_END}
+
+/* ================= NAV ================= */
+document.getElementById("tabs").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("nav.tabs button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll("section.view").forEach(v=>v.classList.toggle("on",v.id==="v-"+b.dataset.v));
+  if(b.dataset.v==="dash")renderDash();
+  if(b.dataset.v==="cal")renderCal();
+  if(b.dataset.v==="syl")renderSyl();
+  if(b.dataset.v==="perf")renderPerf();
+});
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2200)}
+
+/* ================= GOALS ================= */
+function goalsOf(k){return DB.goals[k]||[]}
+function addGoal(){
+  const k=panelKey;const subj=document.getElementById("gSubj").value;
+  const topic=document.getElementById("gTopic").value.trim();const min=+document.getElementById("gMin").value||30;
+  if(!topic){toast("Type a topic first ✍️");return}
+  if(!DB.goals[k])DB.goals[k]=[];
+  DB.goals[k].push({id:uid(),s:subj,t:topic,m:min,done:false});
+  save();renderPanel();toast("Goal added ✅");
+  document.getElementById("gTopic").value="";
+}
+function toggleGoal(k,id){
+  const g=goalsOf(k).find(x=>x.id===id);if(!g)return;g.done=!g.done;save();
+  renderPanel();
+  if(g.done){const s=DB.sessions;s[todayKey()]=(s[todayKey()]||0)+1;save();}
+}
+function delGoal(k,id){DB.goals[k]=goalsOf(k).filter(x=>x.id!==id);save();renderPanel()}
+
+let panelKey=null;
+function openDay(k){
+  if(!k)return;panelKey=k;selDate=k;
+  const d=parseKey(k);
+  document.getElementById("pTitle").textContent=DOW_S[d.getDay()]+", "+d.getDate()+" "+MON_S[d.getMonth()]+" "+d.getFullYear();
+  renderPanel();
+  document.getElementById("panel").classList.add("open");
+  const gs=goalsOf(k);
+  if(gs.length===0&&k===todayKey())document.getElementById("gTopic").focus();
+}
+function closePanel(){document.getElementById("panel").classList.remove("open");if(document.getElementById("v-cal").classList.contains("on"))renderCal()}
+function renderPanel(){
+  const k=panelKey;const box=document.getElementById("pBody");
+  const gs=goalsOf(k);
+  const mins=gs.reduce((a,g)=>a+g.m,0),done=gs.filter(g=>g.done).length;
+  let h=`<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <span class="tag">${gs.length} goals</span><span class="tag">${done} done</span><span class="tag">${mins} min planned</span></div>`;
+  if(!gs.length)h+=`<div class="empty">No goals yet — plan this day below 🎯</div>`;
+  else h+=gs.map(g=>`
+    <div class="trow ${g.done?"done":""}">
+      <span class="dot" style="background:${SUBJ[g.s].color}"></span>
+      <span class="t">${esc(g.t)}<div class="m">${SUBJ[g.s].name} · ${g.m} min</div></span>
+      <button class="chk" onclick="toggleGoal('${k}','${g.id}')">${g.done?"✔":"○"}</button>
+      <button class="del" onclick="delGoal('${k}','${g.id}')">🗑</button>
+    </div>`).join("");
+  box.innerHTML=h;
+  refreshSug();
+}
+function refreshSug(){
+  const sk=document.getElementById("gSubj").value;
+  const dl=document.getElementById("sylSug");dl.innerHTML="";
+  allTopics(sk).forEach(t=>{const o=document.createElement("option");o.value=t.dl||t.name;dl.appendChild(o)});
+}
+function esc(s){const d=document.createElement("div");d.textContent=s;return d.innerHTML}
+
+/* subject select + datalist wiring */
+function fillSubjSelects(){
+  const opts=SUBJECTS.map(s=>`<option value="${s.k}">${s.name}</option>`).join("");
+  document.getElementById("gSubj").innerHTML=opts;
+  document.getElementById("tSubj").innerHTML=opts;
+  document.getElementById("gSubj").addEventListener("change",refreshSug);
+}
+
+/* ================= SYLLABUS ================= */
+function allTopics(sk){
+  const out=[];
+  (SEED[sk]||[]).forEach((t,i)=>out.push({id:"s_"+sk+"_"+i,name:t[1],month:t[0]}));
+  DB.custom.filter(c=>c.s===sk).forEach(c=>out.push({id:c.id,name:c.n,month:c.m||"Custom"}));
+  return out;
+}
+function toggleTopic(id){
+  DB.sylDone[id]=!DB.sylDone[id];save();
+  renderSyl();renderDash();
+  if(document.getElementById("v-cal").classList.contains("on"))renderCal();
+}
+function addCustomTopic(sk){
+  const inp=document.getElementById("ct_"+sk);const v=inp.value.trim();if(!v)return;
+  DB.custom.push({id:"c_"+uid(),s:sk,n:v,m:"Custom"});save();inp.value="";renderSyl();renderDash();toast("Topic added ✅");
+}
+function rmTopic(id){
+  if(id.startsWith("c_")){DB.custom=DB.custom.filter(c=>c.id!==id)}
+  else{delete DB.sylDone[id]}
+  save();renderSyl();renderDash();
+}
+function sylPct(sk){
+  const t=allTopics(sk);if(!t.length)return 0;
+  return Math.round(100*t.filter(x=>DB.sylDone[x.id]).length/t.length);
+}
+function renderSyl(){
+  const box=document.getElementById("sylList");
+  box.innerHTML=SUBJECTS.map(s=>{
+    const tops=allTopics(s.k);
+    const byM={};tops.forEach(t=>{(byM[t.month]=byM[t.month]||[]).push(t)});
+    const months=["Oct","Nov","Dec","Jan","Feb","Custom"].filter(m=>byM[m]);
+    const pct=sylPct(s.k);
+    const body=months.map(m=>`
+      <div class="mgrp"><div class="mt">${m==="Custom"?"My topics":m+" 2026"+(m==="Oct"||m==="Nov"||m==="Dec"?"":" 2027")}</div>
+      ${byM[m].map(t=>`
+        <div class="topic ${DB.sylDone[t.id]?"d":""}" onclick="toggleTopic('${t.id}')">
+          <span class="cb">${DB.sylDone[t.id]?"✔":""}</span>
+          <span class="tt">${esc(t.name)}</span>
+          <button class="rm" title="remove" onclick="event.stopPropagation();rmTopic('${t.id}')">✕</button>
+        </div>`).join("")}
+      </div>`).join("")+`
+      <div class="addtop"><input type="text" id="ct_${s.k}" placeholder="+ Add your own topic / weak area" onkeydown="if(event.key==='Enter')addCustomTopic('${s.k}')">
+      <button class="btn ghost sm" onclick="addCustomTopic('${s.k}')">Add</button></div>`;
+    return `<div class="subjcard" id="sc_${s.k}">
+      <div class="sh" onclick="this.parentNode.classList.toggle('open')">
+        <span class="sb" style="background:${s.color}"></span><span class="sn">${s.name}</span>
+        <span class="sp">${pct}%</span><span class="caret">▶</span>
+      </div>
+      <div class="sbar"><i style="width:${pct}%;background:${s.color}"></i></div>
+      <div class="sbody">${body}</div>
+    </div>`;
+  }).join("");
+}
+
+/* ================= CALENDAR ================= */
+function calMove(d){calIdx=Math.max(0,Math.min(CAL_MONTHS.length-1,calIdx+d));renderCal()}
+function calGoToday(){
+  const now=new Date();
+  const i=CAL_MONTHS.findIndex(([y,m])=>y===now.getFullYear()&&m===now.getMonth());
+  calIdx=i>=0?i:0;renderCal();
+}
+function renderCal(){
+  const [y,m]=CAL_MONTHS[calIdx];
+  document.getElementById("calTitle").textContent=MONTH_NAMES[m]+" "+y;
+  const grid=document.getElementById("calGrid");
+  const first=new Date(y,m,1);let start=first.getDay();
+  const dim=new Date(y,m+1,0).getDate();
+  let h="";
+  for(let i=0;i<start;i++)h+=`<div class="day off"></div>`;
+  const tKey=todayKey();
+  for(let d=1;d<=dim;d++){
+    const k=dkey(new Date(y,m,d));const gs=goalsOf(k);
+    const done=gs.filter(g=>g.done).length;const pct=gs.length?Math.round(100*done/gs.length):0;
+    const isSun=new Date(y,m,d).getDay()===0;
+    h+=`<div class="day ${k===tKey?"today":""} ${k===selDate?"sel":""}" onclick="openDay('${k}')">
+      <span class="n">${d}</span>${isSun?'<span class="wknd">SUN</span>':''}
+      <div class="dots">${gs.map(g=>`<i style="background:${g.done?"var(--green)":SUBJ[g.s].color}"></i>`).join("")}</div>
+      ${gs.length?`<div class="pctg"><b>${done}</b>/${gs.length} done</div>`:""}
+    </div>`;
+  }
+  grid.innerHTML=h;
+}
+
+/* ================= DASHBOARD ================= */
+function totalSylPct(){
+  let tot=0,done=0;
+  SUBJECTS.forEach(s=>{const t=allTopics(s.k);tot+=t.length;done+=t.filter(x=>DB.sylDone[x.id]).length});
+  return tot?Math.round(100*done/tot):0;
+}
+function streak(){
+  let n=0;const d=new Date();
+  while(inSem(d)&&d<=new Date()){
+    const k=dkey(d);const gs=goalsOf(k);
+    if(gs.length&&gs.every(g=>g.done)){n++;d.setDate(d.getDate()-1)}
+    else if(k===todayKey()){d.setDate(d.getDate()-1)} // today not finished yet doesn't break
+    else break;
+  }
+  return n;
+}
+function renderDash(){
+  const p=totalSylPct();
+  document.getElementById("ringPct").textContent=p+"%";
+  document.getElementById("ringMain").style.strokeDashoffset=402-402*p/100;
+  document.getElementById("subjMini").innerHTML=SUBJECTS.map(s=>{
+    const sp=sylPct(s.k);
+    return `<div class="smrow"><span class="nm">${s.name.split(" (")[0]}</span>
+      <div class="bar"><i style="width:${sp}%;background:${s.color}"></i></div><span class="pc">${sp}%</span></div>`;
+  }).join("");
+  // today
+  const t=new Date();
+  document.getElementById("todayDate").textContent=DOW_S[t.getDay()]+", "+t.getDate()+" "+MON_S[t.getMonth()]+" "+t.getFullYear();
+  const gs=goalsOf(todayKey());
+  document.getElementById("todayGoals").innerHTML=gs.length?gs.map(g=>`
+    <div class="trow ${g.done?"done":""}">
+      <span class="dot" style="background:${SUBJ[g.s].color}"></span>
+      <span class="t">${esc(g.t)}<div class="m">${SUBJ[g.s].name} · ${g.m} min</div></span>
+      <button class="chk" onclick="toggleGoal('${todayKey()}','${g.id}')">${g.done?"✔":"○"}</button>
+      <button class="del" onclick="delGoal('${todayKey()}','${g.id}')">🗑</button>
+    </div>`).join(""):`<div class="empty">Aaj koi goal set nahi hai — add karo! 🚀</div>`;
+  document.getElementById("tSess").textContent="Deep-work sessions today: "+(DB.sessions[todayKey()]||0);
+  // stats
+  let totG=0,doneG=0,mins=0,doneMins=0;
+  const days=Object.keys(DB.goals).filter(k=>DB.goals[k].length);
+  days.forEach(k=>DB.goals[k].forEach(g=>{totG++;mins+=g.m;if(g.done){doneG++;doneMins+=g.m}}));
+  const best=(()=>{let bk=null,bv=-1;days.forEach(k=>{const v=DB.goals[k].filter(g=>g.done).length;if(v>bv){bv=v;bk=k}});return bk?parseKey(bk).getDate()+" "+MON_S[parseKey(bk).getMonth()]:"—"})(); 
+  const st=streak();
+  document.getElementById("statRow").innerHTML=`
+    <div class="stat" style="--sc:var(--cyan)"><div class="l">Syllabus covered</div><div class="v">${p}%</div></div>
+    <div class="stat" style="--sc:var(--green)"><div class="l">Goals completed</div><div class="v">${doneG}<span style="font-size:.9rem;color:var(--dim)">/${totG}</span></div></div>
+    <div class="stat" style="--sc:var(--violet)"><div class="l">Study time logged</div><div class="v">${(doneMins/60).toFixed(1)}<span style="font-size:.9rem;color:var(--dim)"> hrs</span></div></div>
+    <div class="stat" style="--sc:var(--amber)"><div class="l">Current streak</div><div class="v">${st}<span style="font-size:.9rem;color:var(--dim)"> day${st===1?"":"s"} 🔥</span></div></div>`;
+  // milestones
+  document.getElementById("milestones").innerHTML=MILESTONES.map(mi=>{
+    const dd=Math.ceil((parseKey(mi.when)-new Date())/864e5);
+    return `<div>🎯 <b>${mi.name}</b> — ${mi.note} · <b>${dd>0?dd+" days left":"scheduled"}</b></div>`;
+  }).join("")+`<div>📘 2nd Comparative (Sept) done — results baaki semester isse aage 🔥</div>`;
+  document.getElementById("quote").textContent="“"+QUOTES[Math.floor(Date.now()/864e5)%QUOTES.length]+"”";
+}
+
+/* ================= PERFORMANCE ================= */
+function addTest(){
+  const s=document.getElementById("tSubj").value,name=document.getElementById("tName").value.trim()||"Test";
+  const date=document.getElementById("tDate").value||todayKey();
+  const sc=+document.getElementById("tScore").value,mx=+document.getElementById("tMax").value;
+  if(!sc&&sc!==0||!mx){toast("Score aur 'out of' dono bharo");return}
+  if(sc>mx){toast("Score 'out of' se zyada nahi ho sakta 😅");return}
+  const k=date.slice(0,7);
+  DB.tests[k]=DB.tests[k]||[];DB.tests[k].push({id:uid(),s,n:name,sc,mx});
+  save();renderPerf();toast("Score logged 📈");
+  document.getElementById("tName").value="";document.getElementById("tScore").value="";
+}
+function delTest(k,id){DB.tests[k]=DB.tests[k].filter(t=>t.id!==id);save();renderPerf()}
+function renderPerf(){
+  let totG=0,doneG=0,mins=0,doneMins=0;
+  Object.keys(DB.goals).forEach(k=>DB.goals[k].forEach(g=>{totG++;mins+=g.m;if(g.done){doneG++;doneMins+=g.m}}));
+  const comp=totG?Math.round(100*doneG/totG):0;
+  const allTests=[];Object.keys(DB.tests).forEach(k=>DB.tests[k].forEach(t=>allTests.push({...t,mo:k})));
+  const avg=allTests.length?Math.round(100*allTests.reduce((a,t)=>a+t.sc/t.mx,0)/allTests.length):0;
+  document.getElementById("perfStats").innerHTML=`
+    <div class="stat" style="--sc:var(--cyan)"><div class="l">Goal completion</div><div class="v">${comp}%</div></div>
+    <div class="stat" style="--sc:var(--green)"><div class="l">Hours completed</div><div class="v">${(doneMins/60).toFixed(1)}</div></div>
+    <div class="stat" style="--sc:var(--violet)"><div class="l">Tests logged</div><div class="v">${allTests.length}</div></div>
+    <div class="stat" style="--sc:var(--amber)"><div class="l">Avg test score</div><div class="v">${avg}%</div></div>`;
+  // weekly chart
+  const weeks={};
+  Object.keys(DB.goals).forEach(k=>{
+    const d=parseKey(k);const wk=new Date(d);wk.setDate(d.getDate()-((d.getDay()+6)%7));
+    const wkK=dkey(wk);
+    DB.goals[k].forEach(g=>{if(g.done)weeks[wkK]=(weeks[wkK]||0)+g.m});
+  });
+  const keys=Object.keys(weeks).sort();
+  const max=Math.max(60,...keys.map(k=>weeks[k]));
+  document.getElementById("weekChart").innerHTML=keys.length?keys.map(k=>{
+    const d=parseKey(k);const hrs=weeks[k]/60;
+    return `<div class="wkcol" title="${hrs.toFixed(1)} hrs"><div class="wkbar" style="height:${Math.max(4,100*weeks[k]/max)}%"></div><div class="wklab">${d.getDate()} ${MON_S[d.getMonth()]}</div></div>`;
+  }).join(""):`<div class="empty">Koi data nahi — calendar mein goals complete karo, graph yahan dikhega 📊</div>`;
+  // subject goal completion
+  document.getElementById("perfSubj").innerHTML=SUBJECTS.map(s=>{
+    let t=0,d=0;Object.keys(DB.goals).forEach(k=>DB.goals[k].forEach(g=>{if(g.s===s.k){t++;if(g.done)d++}}));
+    const p=t?Math.round(100*d/t):0;
+    return `<div class="smrow"><span class="nm">${s.name.split(" (")[0]}</span>
+      <div class="bar"><i style="width:${p}%;background:${s.color}"></i></div><span class="pc">${p}%</span></div>`;
+  }).join("");
+  // tests list
+  const mo=Object.keys(DB.tests).sort().reverse();
+  document.getElementById("testList").innerHTML=mo.length?mo.map(k=>{
+    const dt=parseKey(k+"-01");
+    return `<div style="margin-bottom:14px"><div class="tag" style="margin-bottom:8px">${MONTH_NAMES[dt.getMonth()]} ${dt.getFullYear()}</div>
+    ${DB.tests[k].map(t=>`
+      <div class="testrow">
+        <span style="color:${SUBJ[t.s].color};font-weight:600">${SUBJ[t.s].name.split(" (")[0]}</span>
+        <span>${esc(t.n)}</span>
+        <span class="sc">${t.sc}/${t.mx}</span>
+        <span class="sc" style="color:${t.sc/t.mx>=.8?"var(--green)":t.sc/t.mx>=.5?"var(--amber)":"var(--pink)"}">${Math.round(100*t.sc/t.mx)}%</span>
+        <button class="del" style="background:none;border:none;color:var(--dim2);cursor:pointer" onclick="delTest('${k}','${t.id}')">🗑</button>
+      </div>`).join("")}</div>`;
+  }).join(""):`<div class="empty">Abhi tak koi test score log nahi kiya.</div>`;
+}
+
+/* ================= TIMER ================= */
+let tLeft=25*60,tRun=null;
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function drawClock(){document.getElementById("clock").textContent=fmt(tLeft)}
+function setTimer(m){stopT();tLeft=m*60;drawClock()}
+function stopT(){if(tRun){clearInterval(tRun);tRun=null;document.getElementById("tStart").textContent="Start"}}
+function toggleTimer(){
+  if(tRun){stopT();return}
+  document.getElementById("tStart").textContent="Pause";
+  tRun=setInterval(()=>{tLeft--;drawClock();
+    if(tLeft<=0){stopT();const s=DB.sessions;s[todayKey()]=(s[todayKey()]||0)+1;save();renderDash();
+      toast("Session done! 🧠 Take a short break")}
+  },1000);
+}
+function resetTimer(){stopT();tLeft=25*60;drawClock()}
+
+/* ================= BACKUP ================= */
+document.getElementById("btnExport").onclick=()=>{
+  const a=document.createElement("a");
+  a.href="data:application/json,"+encodeURIComponent(JSON.stringify(DB,null,2));
+  a.download="semtrack-backup-"+todayKey()+".json";a.click();toast("Backup downloaded ⭳");
+};
+document.getElementById("btnImport").onclick=()=>document.getElementById("fileImport").click();
+document.getElementById("fileImport").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);
+    if(!d.goals&&typeof d!=="object")throw 0;
+    DB=Object.assign({goals:{},sylDone:{},custom:[],tests:{},sessions:{}},d);
+    save();renderDash();renderSyl();renderCal();renderPerf();toast("Backup restored ✅");
+  }catch(err){toast("File valid nahi lag rahi 😕")}};
+  r.readAsText(f);e.target.value="";
+};
+document.getElementById("btnReset").onclick=()=>{
+  if(confirm("Sab kuch reset hoga aur naya designed plan (Oct-Feb) load hoga — tumhare custom goals, syllabus ticks aur test scores delete ho jayenge. Pakka?")){
+    stDel();load();renderDash();renderSyl();renderCal();renderPerf();toast("Reset done — fresh start 🌱");
+  }
+};
+
+window.addEventListener('error',function(e){try{toast("Something went wrong: "+(e.message||'?'))}catch(_){}});
+
+/* ================= INIT ================= */
+load();fillSubjSelects();drawClock();
+if(!STORAGE_OK){const w=document.getElementById('storewarn');if(w)w.style.display='block';}
+document.getElementById("tDate").value=todayKey();
+if(!inSem(new Date())){calIdx=0}
+renderDash();renderCal();renderSyl();renderPerf();
+// preselect subject datalist
+refreshSug();
+</script>
+</body>
+</html>
